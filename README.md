@@ -4,13 +4,23 @@
 [![rank](https://make.fun/badge/github-core-clone-01/Fransris/git-forge/rank.svg)](https://make.fun/bounty/github-core-clone-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=github-core-clone-01)
 [![reward](https://make.fun/badge/github-core-clone-01/Fransris/git-forge/reward.svg)](https://make.fun/bounty/github-core-clone-01?utm_source=github&utm_medium=readme&utm_campaign=github-core-clone-01)
 
-A standalone, GitHub-compatible git forge: one Node 22 process, standard library only, serving git
-smart HTTP, the REST v3 API, the GraphQL v4 API and MCP over Streamable HTTP from one store.
+A standalone, GitHub-compatible git forge: one process, serving git smart HTTP, the REST v3 API, the
+GraphQL v4 API and MCP over Streamable HTTP from one store.
+
+`main.ts` supervises a vendored, statically linked Go binary (`forge`, built from the `.go` files in
+this repository with `CGO_ENABLED=0`): the binary binds an ephemeral port, registers it with the env
+and serves until the trial ends. No dependency, no package manager, no git binary.
 
 ## Run it
 
 ```sh
 MAKEFUN_ENV_URL=http://127.0.0.1:8080 MAKEFUN_SHOP_TOKEN=shpat_... node main.ts
+```
+
+## Build it
+
+```sh
+CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o forge .
 ```
 
 ---
@@ -35,15 +45,15 @@ MAKEFUN_ENV_URL=http://127.0.0.1:8080 MAKEFUN_SHOP_TOKEN=shpat_... node main.ts
 
 ## How it is built
 
-- `store.ts` — the store: a deterministic clock (fixed epoch plus a tick), repositories, issues,
+- `store.go` — the store: a deterministic clock (fixed epoch plus a tick), repositories, issues,
   pulls, labels and the git object graph. Nothing reads the wall clock, so two runs on the same
   instance leave the same export.
-- `git.ts` — the object model: sha1 object ids, tree building and flattening, commit parsing,
+- `git.go` — the object model: sha1 object ids, tree building and flattening, commit parsing,
   reachability, merge base, packfile read and write, delta application, pkt-lines, shallow walks.
-- `githttp.ts` — the protocol: advertisements, ls-refs, fetch with shallow support, receive-pack with
+- `githttp.go` — the protocol: advertisements, ls-refs, fetch with shallow support, receive-pack with
   per-ref reports. A fetch and an ls-refs are cached by their exact question, because fifty shallow
   clones of one branch ask the same question.
-- `rest.ts`, `graphql.ts`, `mcp.ts` — the three API surfaces, all reading and writing that one store.
+- `rest.go`, `graphql.go`, `mcp.go` — the three API surfaces, all reading and writing that one store.
 
 The login is not configured anywhere: the forge serves a single account and adopts the owner from the
 first repository path the client asks for, so the token's own requests define the account.
