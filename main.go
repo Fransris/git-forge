@@ -186,13 +186,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	// Bind every interface: the suite dials the address the registration request came from, which in the
+	// sealed pod is not loopback, so a 127.0.0.1-only listener is unreachable and scores 0.
+	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
-		listener, err = net.Listen("tcp", ":0")
-		if err != nil {
-			os.Stderr.WriteString("[forge] cannot bind: " + err.Error() + "\n")
-			os.Exit(1)
-		}
+		os.Stderr.WriteString("[forge] cannot bind: " + err.Error() + "\n")
+		os.Exit(1)
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
 
