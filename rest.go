@@ -210,12 +210,14 @@ func handleREST(w http.ResponseWriter, r *http.Request, store *Store, path strin
 	method := r.Method
 
 	if path == "" || path == "/" {
+		// The header must be set before the body is written: a Set after sendJSON is dropped, and the
+		// suite reads X-OAuth-Scopes off this reply (check repos.root).
+		w.Header().Set("X-OAuth-Scopes", "repo, read:org")
 		sendJSON(w, 200, map[string]any{
 			"current_user_url": "/api/v3/user", "repository_url": "/api/v3/repos/{owner}/{repo}",
 			"user_repositories_url": "/api/v3/user/repos", "rate_limit_url": "/api/v3/rate_limit",
 			"graphql_url": "/api/graphql",
 		})
-		w.Header().Set("X-OAuth-Scopes", "repo, read:org")
 		return true
 	}
 	if path == "/meta" {
