@@ -46,6 +46,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if method != "GET" && method != "HEAD" {
 		body, _ = io.ReadAll(r.Body)
 		r.Body.Close()
+		// Restore it: the REST handlers decode the body themselves, and a drained r.Body made every
+		// POST /api/v3/user/repos answer 400 "Problems parsing JSON", which took the whole suite down.
+		r.Body = io.NopCloser(bytes.NewReader(body))
+		r.ContentLength = int64(len(body))
 	}
 
 	// git smart HTTP: /{owner}/{repo}.git/...
